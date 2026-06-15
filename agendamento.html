@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Agendamento - Odivelas Barbearia</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap');
+
+    * { box-sizing: border-box; }
+
+    body { font-family: 'Inter', sans-serif; background: #0a0a0a; }
+
+    .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+
+    /* scrollbar horizontal suave */
+    .scroll-x { overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+    .scroll-x::-webkit-scrollbar { display: none; }
+
+    /* step badge */
+    .step-badge {
+      width: 26px; height: 26px; min-width: 26px;
+      background: #dc2626; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #fff;
+    }
+
+    /* card barbeiro */
+    .barbeiro-card {
+      border: 2px solid #3f3f46;
+      background: #141414;
+      border-radius: 14px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      min-width: 110px;
+      position: relative;
+    }
+    .barbeiro-card:hover { border-color: #dc2626; }
+    .barbeiro-card.ativo { border-color: #eab308; background: #1a1600; }
+    .barbeiro-card .check {
+      position: absolute; top: 8px; right: 10px;
+      color: #eab308; font-size: 14px; display: none;
+    }
+    .barbeiro-card.ativo .check { display: block; }
+
+    /* card serviço */
+    .servico-card {
+      border: 1.5px solid #3f3f46;
+      background: #111;
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .servico-card:hover { border-color: #dc2626; }
+    .servico-card.ativo { border-color: #dc2626; background: #1a0000; }
+
+    /* chip de data */
+    .data-chip {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 10px 16px; border-radius: 10px;
+      border: 1.5px solid #3f3f46; background: #111;
+      cursor: pointer; transition: all 0.2s; min-width: 62px;
+    }
+    .data-chip:hover { border-color: #dc2626; }
+    .data-chip.ativo { border-color: #eab308; background: #1a1600; }
+    .data-chip .dia-semana { font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 1px; }
+    .data-chip .dia-num { font-size: 16px; font-weight: 800; color: #fff; }
+    .data-chip.ativo .dia-semana { color: #ca8a04; }
+    .data-chip.ativo .dia-num { color: #eab308; }
+
+    /* botão horário */
+    .horario-btn {
+      border: 1.5px solid #3f3f46; background: #111;
+      color: #d4d4d8; border-radius: 8px;
+      padding: 9px 0; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .horario-btn:hover:not(.ocupado) { border-color: #dc2626; color: #fff; }
+    .horario-btn.ativo { border-color: #dc2626; background: #dc2626; color: #fff; }
+    .horario-btn.ocupado {
+      color: #52525b; text-decoration: line-through;
+      cursor: not-allowed; border-color: #27272a;
+    }
+
+    /* resumo */
+    .resumo-box {
+      background: #111; border: 1.5px solid #27272a;
+      border-radius: 14px; padding: 20px;
+    }
+    .resumo-row {
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #1f1f1f;
+    }
+    .resumo-row:last-child { border-bottom: none; }
+
+    /* histórico */
+    .hist-item {
+      border-left: 3px solid #dc2626;
+      padding: 12px 16px; background: #111;
+      border-radius: 0 10px 10px 0; margin-bottom: 10px;
+    }
+
+    /* badge status */
+    .badge-agendado { background: #7f1d1d; color: #fca5a5; font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; letter-spacing: 1px; }
+    .badge-concluido { background: #14532d; color: #86efac; font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; letter-spacing: 1px; }
+
+    /* modal */
+    #modalConfirmacao { display: none; }
+    #modalConfirmacao.aberto { display: flex; }
+
+    /* galeria de referência */
+    .ref-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .ref-img {
+      border-radius: 10px; overflow: hidden;
+      aspect-ratio: 1; object-fit: cover; width: 100%;
+      border: 1.5px solid #27272a;
+      transition: transform 0.2s;
+    }
+    .ref-img:hover { transform: scale(1.03); }
+
+    /* botão confirmar */
+    .btn-confirmar {
+      width: 100%; background: #dc2626;
+      color: #fff; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 4px;
+      padding: 16px; border-radius: 14px;
+      border: none; cursor: pointer; transition: background 0.2s;
+      font-size: 14px;
+    }
+    .btn-confirmar:hover { background: #b91c1c; }
+
+    /* Animação fade */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+  </style>
+</head>
+
+<body class="bg-zinc-950 text-white">
+
+  <!-- ===== HEADER ===== -->
+  <header class="bg-black border-b border-zinc-800 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <img src="barbearia (1).png" alt="Logo" class="w-9 h-9 rounded-full object-cover border border-zinc-700">
+      <span class="bebas text-xl text-white tracking-widest">ODIVELAS <span class="text-yellow-400">✦</span></span>
+    </div>
+    <a href="barbearia.html"
+      class="bg-red-600 hover:bg-red-700 transition text-white font-bold uppercase text-xs tracking-widest px-4 py-2 rounded-xl">
+      Voltar
+    </a>
+  </header>
+
+  <!-- ===== CONTEÚDO ===== -->
+  <main class="max-w-lg mx-auto px-4 py-8 space-y-8">
+
+    <!-- Título -->
+    <div>
+      <h1 class="bebas text-4xl text-white">NOVO AGENDAMENTO</h1>
+      <p class="text-zinc-500 text-sm mt-1">Selecione barbeiro, serviço, data e horário</p>
+    </div>
+
+    <!-- ===== PASSO 1: BARBEIRO ===== -->
+    <section>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="step-badge">1</div>
+        <span class="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Escolha o Barbeiro</span>
+      </div>
+
+      <div class="scroll-x">
+        <div class="flex gap-3 pb-1" style="width: max-content;" id="listaBarbeiros">
+
+          <div class="barbeiro-card" onclick="selecionarBarbeiro(this, 'HS Barbeiro')">
+            <span class="check">✓</span>
+            <img src="barbeiro.png" alt="HS Barbeiro" class="w-14 h-14 rounded-full object-cover border-2 border-zinc-600">
+            <span class="text-white font-bold text-xs uppercase text-center">HS Barbeiro</span>
+            <span class="text-yellow-400 text-xs">Master</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PASSO 2: SERVIÇO ===== -->
+    <section>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="step-badge">2</div>
+        <span class="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Escolha o Serviço</span>
+      </div>
+
+      <!-- Galeria de referência dos serviços -->
+      <div class="ref-grid mb-5">
+        <div class="relative">
+          <img src="degrade_jpg.jpeg" alt="Degradê" class="ref-img">
+          <span class="absolute bottom-2 left-2 text-xs font-bold bg-black/70 text-yellow-400 px-2 py-1 rounded">Degradê</span>
+        </div>
+        <div class="relative">
+          <img src="social_jpg.jpeg" alt="Social" class="ref-img">
+          <span class="absolute bottom-2 left-2 text-xs font-bold bg-black/70 text-yellow-400 px-2 py-1 rounded">Social</span>
+        </div>
+        <div class="relative">
+          <img src="barba_jpg.jpeg" alt="Barba" class="ref-img">
+          <span class="absolute bottom-2 left-2 text-xs font-bold bg-black/70 text-yellow-400 px-2 py-1 rounded">Barba</span>
+        </div>
+        <div class="relative">
+          <img src="sobrancelha_jpg.jpeg" alt="Sobrancelha" class="ref-img">
+          <span class="absolute bottom-2 left-2 text-xs font-bold bg-black/70 text-yellow-400 px-2 py-1 rounded">Sobrancelha</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3" id="listaServicos">
+
+        <div class="servico-card" onclick="selecionarServico(this, 'Degradê', 20)">
+          <div>
+            <div class="font-bold uppercase text-sm text-white">Degradê</div>
+            <div class="text-zinc-500 text-xs mt-0.5">30 min</div>
+          </div>
+          <span class="text-yellow-400 font-extrabold text-base">R$ 20</span>
+        </div>
+
+        <div class="servico-card" onclick="selecionarServico(this, 'Navalhado', 25)">
+          <div>
+            <div class="font-bold uppercase text-sm text-white">Navalhado</div>
+            <div class="text-zinc-500 text-xs mt-0.5">35 min</div>
+          </div>
+          <span class="text-yellow-400 font-extrabold text-base">R$ 25</span>
+        </div>
+
+        <div class="servico-card" onclick="selecionarServico(this, 'Barba', 20)">
+          <div>
+            <div class="font-bold uppercase text-sm text-white">Barba</div>
+            <div class="text-zinc-500 text-xs mt-0.5">25 min</div>
+          </div>
+          <span class="text-yellow-400 font-extrabold text-base">R$ 20</span>
+        </div>
+
+        <div class="servico-card" onclick="selecionarServico(this, 'Sobrancelha', 5)">
+          <div>
+            <div class="font-bold uppercase text-sm text-white">Sobrancelha</div>
+            <div class="text-zinc-500 text-xs mt-0.5">15 min</div>
+          </div>
+          <span class="text-yellow-400 font-extrabold text-base">R$ 5</span>
+        </div>
+
+        <div class="servico-card" onclick="selecionarServico(this, 'Social', 20)">
+          <div>
+            <div class="font-bold uppercase text-sm text-white">Social</div>
+            <div class="text-zinc-500 text-xs mt-0.5">30 min</div>
+          </div>
+          <span class="text-yellow-400 font-extrabold text-base">R$ 20</span>
+        </div>
+
+        <div class="servico-card" onclick="selecionarServico(this, 'Corte + Barba', 35)">
+          <div>
+            <div class="font-bold uppercase text-sm text-white">Corte + Barba</div>
+            <div class="text-zinc-500 text-xs mt-0.5">55 min</div>
+          </div>
+          <span class="text-yellow-400 font-extrabold text-base">R$ 35</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== PASSO 3: DATA ===== -->
+    <section>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="step-badge">3</div>
+        <span class="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Escolha a Data</span>
+      </div>
+
+      <div class="scroll-x">
+        <div class="flex gap-3 pb-1" id="listaData" style="width: max-content;"></div>
+      </div>
+    </section>
+
+    <!-- ===== PASSO 4: HORÁRIO ===== -->
+    <section>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="step-badge">4</div>
+        <span class="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Escolha o Horário</span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2" id="listaHorarios"></div>
+    </section>
+
+    <!-- ===== DADOS DO CLIENTE ===== -->
+    <section class="space-y-4">
+      <div class="flex items-center gap-3 mb-1">
+        <div class="step-badge" style="background:#eab308">5</div>
+        <span class="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Seus Dados</span>
+      </div>
+
+      <input id="nomeCliente" type="text" placeholder="Nome completo"
+        class="w-full bg-black border border-zinc-800 focus:border-red-600 outline-none text-white px-4 py-3 rounded-xl transition-all text-sm">
+
+      <input id="telefone" type="tel" placeholder="(00) 00000-0000"
+        class="w-full bg-black border border-zinc-800 focus:border-red-600 outline-none text-white px-4 py-3 rounded-xl transition-all text-sm">
+    </section>
+
+    <!-- ===== RESUMO ===== -->
+    <div id="resumo" class="hidden resumo-box fade-in">
+      <div class="resumo-row">
+        <span class="text-zinc-500 text-sm">Barbeiro</span>
+        <span id="resumoBarbeiro" class="text-white font-bold text-sm"></span>
+      </div>
+      <div class="resumo-row">
+        <span class="text-zinc-500 text-sm">Serviço</span>
+        <span id="resumoServico" class="text-white font-bold text-sm"></span>
+      </div>
+      <div class="resumo-row">
+        <span class="text-zinc-500 text-sm">Data · Horário</span>
+        <span id="resumoDataHorario" class="text-white font-bold text-sm"></span>
+      </div>
+      <div class="resumo-row">
+        <span class="text-zinc-500 text-sm font-semibold uppercase tracking-widest text-xs">Total</span>
+        <span id="resumoValor" class="text-yellow-400 font-extrabold text-lg"></span>
+      </div>
+    </div>
+
+    <!-- ===== BOTÃO CONFIRMAR ===== -->
+    <div class="space-y-2">
+      <button class="btn-confirmar" onclick="confirmarAgendamento()">
+        Confirmar Agendamento
+      </button>
+      <p class="text-center text-zinc-600 text-xs uppercase tracking-widest">Você receberá uma confirmação por e-mail</p>
+    </div>
+
+    <!-- ===== HISTÓRICO ===== -->
+    <section>
+      <h2 class="bebas text-2xl mb-4">MEU <span class="text-yellow-400">HISTÓRICO</span></h2>
+
+      <div class="hist-item fade-in">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-zinc-400 text-xs mb-1">14 Mai 2025 · 11:00</p>
+            <p class="font-bold uppercase text-sm">Corte Clássico</p>
+            <p class="text-zinc-500 text-xs mt-0.5">HS Barbeiro</p>
+          </div>
+          <span class="badge-agendado">AGENDADO</span>
+        </div>
+      </div>
+
+      <div class="hist-item fade-in">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-zinc-400 text-xs mb-1">28 Abr 2025 · 14:30</p>
+            <p class="font-bold uppercase text-sm">Corte + Barba</p>
+            <p class="text-zinc-500 text-xs mt-0.5">HS Barbeiro</p>
+          </div>
+          <span class="badge-concluido">CONCLUÍDO</span>
+        </div>
+      </div>
+
+      <div class="hist-item fade-in">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-zinc-400 text-xs mb-1">10 Abr 2025 · 10:00</p>
+            <p class="font-bold uppercase text-sm">Barba Completa</p>
+            <p class="text-zinc-500 text-xs mt-0.5">HS Barbeiro</p>
+          </div>
+          <span class="badge-concluido">CONCLUÍDO</span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ===== MODAL CONFIRMAÇÃO ===== -->
+  <div id="modalConfirmacao" class="fixed inset-0 bg-black/85 backdrop-blur-sm items-center justify-center z-50 px-4">
+    <div class="w-full max-w-sm bg-zinc-950 border border-red-600 rounded-2xl shadow-2xl p-6 text-center">
+
+      <div class="text-5xl mb-3">✅</div>
+      <h2 class="bebas text-3xl text-white tracking-widest mb-1">AGENDADO!</h2>
+      <p class="text-zinc-500 text-sm mb-5">Seu horário foi confirmado com sucesso.</p>
+
+      <div class="resumo-box text-left mb-5 space-y-0">
+        <div class="resumo-row"><span class="text-zinc-500 text-sm">Cliente</span><span id="modalNome" class="text-white font-bold text-sm"></span></div>
+        <div class="resumo-row"><span class="text-zinc-500 text-sm">Serviço</span><span id="modalServico" class="text-white font-bold text-sm"></span></div>
+        <div class="resumo-row"><span class="text-zinc-500 text-sm">Barbeiro</span><span id="modalBarbeiro" class="text-white font-bold text-sm"></span></div>
+        <div class="resumo-row"><span class="text-zinc-500 text-sm">Data · Hora</span><span id="modalDataHora" class="text-white font-bold text-sm"></span></div>
+        <div class="resumo-row"><span class="text-zinc-500 text-sm">Total</span><span id="modalValor" class="text-yellow-400 font-extrabold text-base"></span></div>
+      </div>
+
+      <button onclick="fecharConfirmacao()"
+        class="w-full bg-red-600 hover:bg-red-700 transition text-white font-bold uppercase tracking-widest py-3 rounded-xl text-sm">
+        Fechar
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="bg-black border-t border-zinc-800 mt-16">
+    <div class="max-w-lg mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-8">
+
+      <div>
+        <h2 class="bebas text-2xl text-white tracking-widest">
+          Odivelas <span class="text-yellow-400">Barbearia</span>
+        </h2>
+        <p class="text-zinc-600 mt-1 uppercase tracking-widest text-xs">Arte · Estilo · Presença</p>
+      </div>
+
+      <div class="flex flex-col gap-4 text-center md:text-right">
+        <a href="https://www.google.com/maps/search/?api=1&query=ODIVELAS+BARBEARIA+Sao+Caetano+de+Odivelas"
+          target="_blank"
+          class="flex items-center justify-center gap-3 text-zinc-400 hover:text-red-500 transition text-sm">
+          <span class="text-xl">📍</span>
+          <div class="text-left">
+            <p class="font-semibold">Av. Magalhães Barata - Umarizal</p>
+            <p class="text-xs text-zinc-600">São Caetano de Odivelas - PA</p>
+          </div>
+        </a>
+
+        <a href="https://instagram.com/odivelas_barbearia" target="_blank"
+          class="flex items-center justify-center gap-3 text-zinc-400 hover:text-yellow-400 transition text-sm">
+          <img src="instagram.png" alt="Instagram" class="w-6 h-6 object-contain">
+          <span class="font-semibold">@odivelas_barbearia</span>
+        </a>
+      </div>
+
+    </div>
+    <div class="border-t border-zinc-900 py-4 text-center text-zinc-700 text-xs">
+      © 2026 Odivelas Barbearia — Todos os direitos reservados.
+    </div>
+  </footer>
+
+  <script src="agendamento.js"></script>
+
+</body>
+</html>
